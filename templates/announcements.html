@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}Объявления - Любимый хвостик{% endblock %}
+
+{% block content %}
+<section class="page-head">
+    <h1>Объявления и акции</h1>
+    <p>Новости магазина, скидки и важная информация для покупателей.</p>
+</section>
+
+<section class="section">
+    <div class="news-grid">
+        {% for announcement in announcements %}
+            {% include "partials/announcement_card.html" %}
+        {% else %}
+            <p class="empty-state">Объявлений пока нет.</p>
+        {% endfor %}
+    </div>
+</section>
+{% endblock %}

@@ -1,0 +1,242 @@
+{% extends "base.html" %}
+
+{% block content %}
+<section class="hero">
+    <div class="hero-content">
+        <h1>Любимый хвостик</h1>
+        <p>Зоомагазин с ветеринарной аптекой, аквариумистикой и товарами для животных.</p>
+        <div class="hero-highlights">
+            <span>Ветеринарная аптека</span>
+            <span>Аквариумистика</span>
+            <span>Животные</span>
+        </div>
+        <div class="hero-details">
+            <div class="hero-detail-card">
+                <strong>Режим работы</strong>
+                <span>С 9:00 до 20:00</span>
+                <span>Без обеда и выходных</span>
+            </div>
+        </div>
+        <form class="hero-search" action="{{ url_for('index') }}" method="get">
+            <input type="search" name="q" placeholder="Найти корм, игрушку или аксессуар">
+            <button class="button" type="submit">Найти</button>
+        </form>
+    </div>
+    <div class="hero-logo">
+        <img src="{{ url_for('static', filename='img/site-logo-hero-bw.png') }}" alt="Логотип Любимый хвостик">
+    </div>
+</section>
+
+<div class="mobile-catalog-hint" id="mobile-catalog-hint" aria-hidden="true">
+    <a href="#popular-catalog">Каталог <span>↓</span></a>
+</div>
+
+<section class="section" id="popular-catalog">
+    <div class="section-heading">
+        <h2><span>Популярные товары</span></h2>
+        <div class="section-actions">
+            <div class="grid-switcher" aria-label="Количество товаров в ряд" data-grid-target="popular-products">
+                <button class="grid-choice" type="button" data-grid-cols="2">2</button>
+                <button class="grid-choice is-active" type="button" data-grid-cols="3">3</button>
+            </div>
+            <a href="{{ url_for('catalog') }}">Весь каталог</a>
+        </div>
+    </div>
+    <div class="product-grid-shell" id="popular-products" style="--product-grid-columns: 3;">
+    <div class="product-grid">
+        {% for product in popular_products %}
+            {% include "partials/product_card.html" %}
+        {% endfor %}
+    </div>
+    </div>
+</section>
+
+<section class="section muted-section">
+    <div class="section-heading">
+        <h2><span>Новые поступления</span></h2>
+        <div class="section-actions">
+            <div class="grid-switcher" aria-label="Количество товаров в ряд" data-grid-target="latest-products">
+                <button class="grid-choice" type="button" data-grid-cols="2">2</button>
+                <button class="grid-choice is-active" type="button" data-grid-cols="3">3</button>
+            </div>
+            <a href="{{ url_for('catalog', sort='new') }}">Смотреть новинки</a>
+        </div>
+    </div>
+    <div class="product-grid-shell" id="latest-products" style="--product-grid-columns: 3;">
+    <div class="product-grid">
+        {% for product in latest_products %}
+            {% include "partials/product_card.html" %}
+        {% endfor %}
+    </div>
+    </div>
+</section>
+
+<section class="section">
+    <div class="section-heading">
+        <h2><span>Объявления и акции</span></h2>
+        <a href="{{ url_for('announcements') }}">Все объявления</a>
+    </div>
+    <div class="news-grid">
+        {% for announcement in announcements %}
+            {% include "partials/announcement_card.html" %}
+        {% endfor %}
+    </div>
+</section>
+<button class="scroll-top-button" id="home-scroll-top" type="button" aria-label="В начало страницы">В начало</button>
+
+<script>
+    (() => {
+        const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        const isLowPowerDevice = window.matchMedia("(hover: none), (pointer: coarse)").matches;
+        const shouldSkipHeavyAnimations = prefersReducedMotion || isLowPowerDevice;
+        const mobileGridMedia = window.matchMedia("(max-width: 620px)");
+
+        const animateGridChange = (target, nextColumns, buttons) => {
+            const currentColumns = target.style.getPropertyValue("--product-grid-columns").trim() || "3";
+            if (currentColumns === nextColumns) {
+                return;
+            }
+
+            const cards = [...target.querySelectorAll(".product-card")];
+            const firstRects = new Map(cards.map((card) => [card, card.getBoundingClientRect()]));
+
+            target.style.setProperty("--product-grid-columns", nextColumns);
+            buttons.forEach((item) => item.classList.toggle("is-active", item.dataset.gridCols === nextColumns));
+
+            if (shouldSkipHeavyAnimations || !cards.length) {
+                return;
+            }
+
+            target.classList.add("is-grid-animating");
+            requestAnimationFrame(() => {
+                const lastRects = new Map(cards.map((card) => [card, card.getBoundingClientRect()]));
+                const animations = cards.map((card) => {
+                    const first = firstRects.get(card);
+                    const last = lastRects.get(card);
+                    const deltaX = first.left - last.left;
+                    const deltaY = first.top - last.top;
+                    const scaleX = first.width / last.width;
+                    const scaleY = first.height / last.height;
+
+                    return card.animate(
+                        [
+                            {
+                                transform: `translate3d(${deltaX}px, ${deltaY}px, 0) scale(${scaleX}, ${scaleY})`,
+                                transformOrigin: "top left",
+                            },
+                            {
+                                transform: "translate3d(0, 0, 0) scale(1, 1)",
+                                transformOrigin: "top left",
+                            },
+                        ],
+                        {
+                            duration: 460,
+                            easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+                            fill: "both",
+                        }
+                    );
+                });
+
+                Promise.allSettled(animations.map((animation) => animation.finished)).finally(() => {
+                    animations.forEach((animation) => animation.cancel());
+                    target.classList.remove("is-grid-animating");
+                });
+            });
+        };
+
+        const switchers = document.querySelectorAll(".grid-switcher");
+        switchers.forEach((switcher) => {
+            const targetId = switcher.dataset.gridTarget;
+            const target = document.getElementById(targetId);
+            if (!target) {
+                return;
+            }
+
+            const buttons = switcher.querySelectorAll(".grid-choice");
+            const syncGridSwitcher = () => {
+                if (mobileGridMedia.matches) {
+                    buttons[0].dataset.gridCols = "1";
+                    buttons[0].textContent = "1";
+                    buttons[1].dataset.gridCols = "2";
+                    buttons[1].textContent = "2";
+                    target.style.setProperty("--product-grid-columns", "1");
+                    buttons.forEach((item) => item.classList.toggle("is-active", item.dataset.gridCols === "1"));
+                } else {
+                    buttons[0].dataset.gridCols = "2";
+                    buttons[0].textContent = "2";
+                    buttons[1].dataset.gridCols = "3";
+                    buttons[1].textContent = "3";
+                    target.style.setProperty("--product-grid-columns", "3");
+                    buttons.forEach((item) => item.classList.toggle("is-active", item.dataset.gridCols === "3"));
+                }
+            };
+
+            syncGridSwitcher();
+            mobileGridMedia.addEventListener("change", syncGridSwitcher);
+            buttons.forEach((button) => {
+                button.addEventListener("click", () => {
+                    animateGridChange(target, button.dataset.gridCols, buttons);
+                });
+            });
+        });
+
+        const mobileMedia = window.matchMedia("(max-width: 620px)");
+        const hint = document.getElementById("mobile-catalog-hint");
+        const catalogAnchor = document.getElementById("popular-catalog");
+
+        if (hint && catalogAnchor) {
+            let hintTicking = false;
+            const updateHint = () => {
+                hintTicking = false;
+                if (!mobileMedia.matches) {
+                    hint.classList.remove("is-visible");
+                    return;
+                }
+
+                const rect = catalogAnchor.getBoundingClientRect();
+                const isAboveCatalog = rect.top > 0;
+                hint.classList.toggle("is-visible", isAboveCatalog);
+            };
+
+            const requestHintUpdate = () => {
+                if (hintTicking) {
+                    return;
+                }
+                hintTicking = true;
+                requestAnimationFrame(updateHint);
+            };
+
+            updateHint();
+            window.addEventListener("scroll", requestHintUpdate, { passive: true });
+            mobileMedia.addEventListener("change", updateHint);
+        }
+
+        const scrollTopButton = document.getElementById("home-scroll-top");
+        if (scrollTopButton) {
+            let buttonTicking = false;
+            const toggleScrollTopButton = () => {
+                buttonTicking = false;
+                const offset = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+                scrollTopButton.classList.toggle("is-visible", offset > 120);
+            };
+
+            const requestScrollTopToggle = () => {
+                if (buttonTicking) {
+                    return;
+                }
+                buttonTicking = true;
+                requestAnimationFrame(toggleScrollTopButton);
+            };
+
+            toggleScrollTopButton();
+            window.addEventListener("scroll", requestScrollTopToggle, { passive: true });
+            scrollTopButton.addEventListener("click", () => {
+                window.scrollTo({
+                    top: 0,
+                    behavior: prefersReducedMotion ? "auto" : "smooth",
+                });
+            });
+        }
+    })();
+</script>
+{% endblock %}

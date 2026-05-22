@@ -1,0 +1,10 @@
+<a class="news-card card-link" href="{{ url_for('announcement_detail', announcement_id=announcement.id) }}">
+    <span class="card-image">
+        <img src="{{ announcement_image_url(announcement) }}" alt="{{ announcement.title }}" loading="lazy" decoding="async">
+    </span>
+    <div class="card-body">
+        <p class="meta">{{ announcement.created_at.strftime("%d.%m.%Y") }}</p>
+        <h3>{{ announcement.title }}</h3>
+        <p>{{ announcement.text[:120] }}{% if announcement.text|length > 120 %}...{% endif %}</p>
+    </div>
+</a>

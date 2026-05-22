@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Любимый хвостик{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="page-preload">
+<header class="site-header">
+    <a class="brand" href="{{ url_for('index') }}">
+        <span class="nav-link-label">Любимый хвостик</span>
+    </a>
+    <nav class="main-nav" aria-label="Основная навигация">
+        <a href="{{ url_for('catalog') }}"><span class="nav-link-label">Каталог</span></a>
+        <a href="{{ url_for('announcements') }}"><span class="nav-link-label">Объявления</span></a>
+        <a href="{{ url_for('contacts') }}"><span class="nav-link-label">Контакты</span></a>
+        {% if current_user and current_user.is_admin %}
+            <a href="{{ url_for('admin_dashboard') }}"><span class="nav-link-label">Админка</span></a>
+        {% endif %}
+    </nav>
+    <div class="auth-links">
+        {% if current_user %}
+            <span>{{ current_user.username }}</span>
+            <a href="{{ url_for('logout') }}">Выйти</a>
+        {% endif %}
+    </div>
+    <a class="brand-mark-link" href="{{ url_for('index') }}" aria-label="Любимый хвостик">
+        <img class="brand-mark" src="{{ url_for('static', filename='img/site-logo-hero-bw.png') }}" alt="">
+    </a>
+</header>
+
+{% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        <div class="flash-list" data-reveal>
+            {% for category, message in messages %}
+                <div class="flash flash-{{ category }}">{{ message }}</div>
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endwith %}
+
+<main>
+    {% block content %}{% endblock %}
+</main>
+
+<footer class="site-footer" data-reveal>
+    <div>
+        <strong>Любимый хвостик</strong>
+        <span>Ветеринарная аптека, аквариумистика, животные.</span>
+        <span>г. Калинковичи, ул. Свердлова, 73а</span>
+        <span>С 9:00 до 20:00, без обеда и выходных</span>
+    </div>
+    <a class="footer-admin-link" href="{{ url_for('admin_dashboard' if current_user and current_user.is_admin else 'admin_login') }}">
+        Админ-Панель
+    </a>
+</footer>
+<script>
+    (() => {
+        const body = document.body;
+        const header = document.querySelector(".site-header");
+        let lastScrollY = window.scrollY;
+        let ticking = false;
+
+        const syncHeaderVisibility = () => {
+            const currentScrollY = window.scrollY;
+            const delta = currentScrollY - lastScrollY;
+
+            if (currentScrollY <= 24 || delta < -6) {
+                header?.classList.remove("is-hidden");
+            } else if (delta > 6) {
+                header?.classList.add("is-hidden");
+            }
+
+            lastScrollY = currentScrollY;
+            ticking = false;
+        };
+
+        window.addEventListener(
+            "scroll",
+            () => {
+                if (ticking) {
+                    return;
+                }
+
+                ticking = true;
+                requestAnimationFrame(syncHeaderVisibility);
+            },
+            { passive: true }
+        );
+
+        const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        const isLowPowerDevice = window.matchMedia("(hover: none), (pointer: coarse)").matches;
+        if (prefersReducedMotion) {
+            body.classList.remove("page-preload");
+            body.classList.add("page-ready");
+            return;
+        }
+
+        const selectors = [
+            ".hero-content",
+            ".hero-logo",
+            ".page-head",
+            ".filters",
+            ".section",
+            ".muted-section",
+            ".catalog-toolbar",
+            ".product-detail",
+            ".article",
+            ".contact-card",
+            ".auth-card",
+            ".form-page",
+            ".admin-section",
+            ".admin-stats",
+            ".table-wrap",
+            ".product-card",
+            ".news-card",
+            ".pagination",
+            ".empty-state"
+        ];
+
+        const elements = [...document.querySelectorAll(selectors.join(", "))]
+            .filter((element, index, array) => array.indexOf(element) === index);
+
+        if (isLowPowerDevice && elements.length > 10) {
+            elements.length = 10;
+        }
+
+        elements.forEach((element, index) => {
+            element.setAttribute("data-reveal", "");
+            element.style.setProperty("--reveal-delay", `${Math.min(index * 28, 360)}ms`);
+            element.addEventListener(
+                "animationend",
+                () => {
+                    element.removeAttribute("data-reveal");
+                    element.style.removeProperty("--reveal-delay");
+                },
+                { once: true }
+            );
+        });
+
+        requestAnimationFrame(() => {
+            body.classList.remove("page-preload");
+            body.classList.add("page-ready");
+        });
+    })();
+</script>
+</body>
+</html>

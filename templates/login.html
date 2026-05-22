@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}Вход в админку - Любимый хвостик{% endblock %}
+
+{% block content %}
+<section class="auth-card">
+    <h1>Вход в админку</h1>
+    <form method="post">
+        <label>
+            Логин
+            <input type="text" name="username" required>
+        </label>
+        <label>
+            Пароль
+            <input type="password" name="password" required>
+        </label>
+        <button class="button" type="submit">Войти</button>
+    </form>
+</section>
+{% endblock %}

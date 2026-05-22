@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block title %}{{ title }} - Любимый хвостик{% endblock %}
+
+{% block content %}
+<section class="form-page admin-form-page">
+    <h1>{{ title }}</h1>
+    <form method="post" enctype="multipart/form-data" class="admin-form">
+        <label>
+            Название
+            <input type="text" name="name" value="{{ product.name or '' }}" required>
+        </label>
+        <label>
+            Категория
+            <select name="category_id" required>
+                {% for category in categories %}
+                    <option value="{{ category.id }}" {% if product.category_id == category.id %}selected{% endif %}>
+                        {{ category.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </label>
+        <label>
+            Цена
+            <input type="number" min="0" step="1" name="price" value="{{ product.price or 0 }}" required>
+        </label>
+        <label>
+            Описание
+            <textarea name="description" rows="6" required>{{ product.description or '' }}</textarea>
+        </label>
+        <label>
+            Изображение
+            <input type="file" name="image" accept=".jpg,.jpeg,.png,.webp">
+        </label>
+        <label class="checkbox-label">
+            <input type="checkbox" name="in_stock" {% if product.in_stock %}checked{% endif %}>
+            В наличии
+        </label>
+        <label class="checkbox-label">
+            <input type="checkbox" name="is_popular" {% if product.is_popular %}checked{% endif %}>
+            Популярный товар
+        </label>
+        <button class="button" type="submit">Сохранить</button>
+    </form>
+</section>
+{% endblock %}

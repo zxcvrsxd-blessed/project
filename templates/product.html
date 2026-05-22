@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}{{ product.name }} - Любимый хвостик{% endblock %}
+
+{% block content %}
+<section class="product-detail">
+    <div class="detail-image-wrap">
+        <img src="{{ product_image_url(product) }}" alt="{{ product.name }}">
+    </div>
+    <div class="detail-info">
+        <a class="back-link" href="{{ url_for('catalog') }}">Назад в каталог</a>
+        <h1>{{ product.name }}</h1>
+        <p class="category-pill">{{ product.category.name }}</p>
+        <p class="price">{{ "%.0f"|format(product.price) }} {{ currency_code }}</p>
+        <p class="stock {% if not product.in_stock %}stock-empty{% endif %}">
+            {% if product.in_stock %}В наличии{% else %}Нет в наличии{% endif %}
+        </p>
+        <p>{{ product.description }}</p>
+        <a class="button" href="{{ url_for('telegram_redirect') }}">Связаться через Telegram</a>
+    </div>
+</section>
+{% endblock %}

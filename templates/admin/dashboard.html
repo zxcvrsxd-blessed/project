@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}Админка - Любимый хвостик{% endblock %}
+
+{% block content %}
+<section class="page-head admin-hero">
+    <h1>Административная панель</h1>
+    <p>Управление товарами, категориями и объявлениями.</p>
+</section>
+
+<section class="admin-stats">
+    <div class="admin-stat-card"><strong>{{ products|length }}</strong><span>товаров</span></div>
+    <div class="admin-stat-card"><strong>{{ categories|length }}</strong><span>категорий</span></div>
+    <div class="admin-stat-card"><strong>{{ announcements|length }}</strong><span>объявлений</span></div>
+</section>
+
+<section class="admin-section">
+    <div class="section-heading">
+        <h2>Категории</h2>
+        <a class="button button-small" href="{{ url_for('admin_category_create') }}">Добавить категорию</a>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+            <tr>
+                <th>Название</th>
+                <th>Товаров</th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for category in categories %}
+                <tr>
+                    <td>{{ category.name }}</td>
+                    <td>{{ category.products|length }}</td>
+                    <td class="actions">
+                        <form action="{{ url_for('admin_category_delete', category_id=category.id) }}" method="post">
+                            <button type="submit">Удалить</button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="admin-section">
+    <div class="section-heading">
+        <h2>Товары</h2>
+        <a class="button button-small" href="{{ url_for('admin_product_create') }}">Добавить товар</a>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+            <tr>
+                <th>Название</th>
+                <th>Категория</th>
+                <th>Цена</th>
+                <th>Наличие</th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for product in products %}
+                <tr>
+                    <td>{{ product.name }}</td>
+                    <td>{{ product.category.name }}</td>
+                    <td>{{ "%.0f"|format(product.price) }} {{ currency_code }}</td>
+                    <td>{% if product.in_stock %}Да{% else %}Нет{% endif %}</td>
+                    <td class="actions">
+                        <a href="{{ url_for('admin_product_edit', product_id=product.id) }}">Изменить</a>
+                        <form action="{{ url_for('admin_product_delete', product_id=product.id) }}" method="post">
+                            <button type="submit">Удалить</button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+
+<section class="admin-section">
+    <div class="section-heading">
+        <h2>Объявления</h2>
+        <a class="button button-small" href="{{ url_for('admin_announcement_create') }}">Добавить объявление</a>
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+            <tr>
+                <th>Заголовок</th>
+                <th>Дата</th>
+                <th></th>
+            </tr>
+            </thead>
+            <tbody>
+            {% for announcement in announcements %}
+                <tr>
+                    <td>{{ announcement.title }}</td>
+                    <td>{{ announcement.created_at.strftime("%d.%m.%Y") }}</td>
+                    <td class="actions">
+                        <a href="{{ url_for('admin_announcement_edit', announcement_id=announcement.id) }}">Изменить</a>
+                        <form action="{{ url_for('admin_announcement_delete', announcement_id=announcement.id) }}" method="post">
+                            <button type="submit">Удалить</button>
+                        </form>
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</section>
+{% endblock %}

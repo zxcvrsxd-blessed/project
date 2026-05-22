@@ -1,0 +1,286 @@
+{% extends "base.html" %}
+
+{% block title %}Каталог - Любимый хвостик{% endblock %}
+
+{% block content %}
+<section class="page-head">
+    <h1>Каталог товаров</h1>
+    <p>Найдено товаров: {{ total }}</p>
+</section>
+
+<section class="catalog-layout">
+    <form class="filters" action="{{ url_for('catalog') }}" method="get">
+        <label>
+            Поиск
+            <input type="search" name="q" value="{{ filters.q }}" placeholder="Название или описание">
+        </label>
+        <div class="filter-field">
+            <span>Категория</span>
+            <div class="custom-select" data-select-root>
+                <button class="custom-select-trigger" type="button" data-select-trigger aria-expanded="false">
+                    <span data-select-label>
+                        {% if filters.category %}
+                            {% for category in categories %}
+                                {% if filters.category == category.slug %}{{ category.name }}{% endif %}
+                            {% endfor %}
+                        {% else %}
+                            Все категории
+                        {% endif %}
+                    </span>
+                </button>
+                <div class="custom-select-menu" data-select-menu>
+                    <button class="custom-select-option{% if not filters.category %} is-selected{% endif %}" type="button" data-select-option data-value="">Все категории</button>
+                    {% for category in categories %}
+                        <button class="custom-select-option{% if filters.category == category.slug %} is-selected{% endif %}" type="button" data-select-option data-value="{{ category.slug }}">{{ category.name }}</button>
+                    {% endfor %}
+                </div>
+            </div>
+            <select name="category" class="native-select-hidden" tabindex="-1" aria-hidden="true">
+                <option value="">Все категории</option>
+                {% for category in categories %}
+                    <option value="{{ category.slug }}" {% if filters.category == category.slug %}selected{% endif %}>
+                        {{ category.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-row">
+            <label>
+                Цена от
+                <input type="number" min="0" name="min_price" value="{{ filters.min_price or '' }}">
+            </label>
+            <label>
+                Цена до
+                <input type="number" min="0" name="max_price" value="{{ filters.max_price or '' }}">
+            </label>
+        </div>
+        <div class="filter-field">
+            <span>Сортировка</span>
+            <div class="custom-select" data-select-root>
+                <button class="custom-select-trigger" type="button" data-select-trigger aria-expanded="false">
+                    <span data-select-label>
+                        {% if filters.sort == "price_asc" %}Цена по возрастанию{% elif filters.sort == "price_desc" %}Цена по убыванию{% elif filters.sort == "name" %}По названию{% else %}Сначала новые{% endif %}
+                    </span>
+                </button>
+                <div class="custom-select-menu" data-select-menu>
+                    <button class="custom-select-option{% if filters.sort == 'new' %} is-selected{% endif %}" type="button" data-select-option data-value="new">Сначала новые</button>
+                    <button class="custom-select-option{% if filters.sort == 'price_asc' %} is-selected{% endif %}" type="button" data-select-option data-value="price_asc">Цена по возрастанию</button>
+                    <button class="custom-select-option{% if filters.sort == 'price_desc' %} is-selected{% endif %}" type="button" data-select-option data-value="price_desc">Цена по убыванию</button>
+                    <button class="custom-select-option{% if filters.sort == 'name' %} is-selected{% endif %}" type="button" data-select-option data-value="name">По названию</button>
+                </div>
+            </div>
+            <select name="sort" class="native-select-hidden" tabindex="-1" aria-hidden="true">
+                <option value="new" {% if filters.sort == "new" %}selected{% endif %}>Сначала новые</option>
+                <option value="price_asc" {% if filters.sort == "price_asc" %}selected{% endif %}>Цена по возрастанию</option>
+                <option value="price_desc" {% if filters.sort == "price_desc" %}selected{% endif %}>Цена по убыванию</option>
+                <option value="name" {% if filters.sort == "name" %}selected{% endif %}>По названию</option>
+            </select>
+        </div>
+        <button class="button" type="submit">Применить</button>
+        <a class="button button-secondary" href="{{ url_for('catalog') }}">Сбросить</a>
+    </form>
+
+    <div class="product-grid-shell" id="catalog-products" style="--product-grid-columns: 3;">
+        <div class="catalog-toolbar">
+            <div class="grid-switcher" aria-label="Количество товаров в ряд" data-grid-target="catalog-products">
+                <button class="grid-choice" type="button" data-grid-cols="2">2</button>
+                <button class="grid-choice is-active" type="button" data-grid-cols="3">3</button>
+            </div>
+        </div>
+        <div class="product-grid">
+            {% for product in products %}
+                {% include "partials/product_card.html" %}
+            {% else %}
+                <p class="empty-state">По выбранным условиям товаров нет.</p>
+            {% endfor %}
+        </div>
+
+        {% if pages > 1 %}
+            <nav class="pagination" aria-label="Страницы каталога">
+                {% for number in range(1, pages + 1) %}
+                    <a class="{% if number == page %}active{% endif %}" href="{{ url_for('catalog', page=number, q=filters.q, category=filters.category, min_price=filters.min_price, max_price=filters.max_price, sort=filters.sort) }}">
+                        {{ number }}
+                    </a>
+                {% endfor %}
+            </nav>
+        {% endif %}
+    </div>
+</section>
+<button class="scroll-top-button" id="catalog-scroll-top" type="button" aria-label="В начало страницы">В начало</button>
+<script>
+    (() => {
+        const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+        const isLowPowerDevice = window.matchMedia("(hover: none), (pointer: coarse)").matches;
+        const shouldSkipHeavyAnimations = prefersReducedMotion || isLowPowerDevice;
+        const mobileGridMedia = window.matchMedia("(max-width: 620px)");
+        const switcher = document.querySelector('.grid-switcher[data-grid-target="catalog-products"]');
+        const target = document.getElementById("catalog-products");
+        const scrollTopButton = document.getElementById("catalog-scroll-top");
+        const customSelects = document.querySelectorAll("[data-select-root]");
+
+        customSelects.forEach((selectRoot) => {
+            const trigger = selectRoot.querySelector("[data-select-trigger]");
+            const menu = selectRoot.querySelector("[data-select-menu]");
+            const label = selectRoot.querySelector("[data-select-label]");
+            const nativeSelect = selectRoot.parentElement.querySelector(".native-select-hidden");
+            const options = selectRoot.querySelectorAll("[data-select-option]");
+
+            if (!trigger || !menu || !label || !nativeSelect || !options.length) {
+                return;
+            }
+
+            const closeSelect = () => {
+                selectRoot.classList.remove("is-open");
+                trigger.setAttribute("aria-expanded", "false");
+            };
+
+            const openSelect = () => {
+                customSelects.forEach((item) => {
+                    if (item !== selectRoot) {
+                        item.classList.remove("is-open");
+                        item.querySelector("[data-select-trigger]")?.setAttribute("aria-expanded", "false");
+                    }
+                });
+                selectRoot.classList.add("is-open");
+                trigger.setAttribute("aria-expanded", "true");
+            };
+
+            trigger.addEventListener("click", () => {
+                if (selectRoot.classList.contains("is-open")) {
+                    closeSelect();
+                } else {
+                    openSelect();
+                }
+            });
+
+            options.forEach((option) => {
+                option.addEventListener("click", () => {
+                    const nextValue = option.dataset.value ?? "";
+                    nativeSelect.value = nextValue;
+                    label.textContent = option.textContent.trim();
+                    options.forEach((item) => item.classList.toggle("is-selected", item === option));
+                    closeSelect();
+                });
+            });
+        });
+
+        document.addEventListener("click", (event) => {
+            customSelects.forEach((selectRoot) => {
+                if (!selectRoot.contains(event.target)) {
+                    selectRoot.classList.remove("is-open");
+                    selectRoot.querySelector("[data-select-trigger]")?.setAttribute("aria-expanded", "false");
+                }
+            });
+        });
+
+        if (switcher && target) {
+            const buttons = switcher.querySelectorAll(".grid-choice");
+            const syncGridSwitcher = () => {
+                if (mobileGridMedia.matches) {
+                    buttons[0].dataset.gridCols = "1";
+                    buttons[0].textContent = "1";
+                    buttons[1].dataset.gridCols = "2";
+                    buttons[1].textContent = "2";
+                    target.style.setProperty("--product-grid-columns", "1");
+                    buttons.forEach((item) => item.classList.toggle("is-active", item.dataset.gridCols === "1"));
+                } else {
+                    buttons[0].dataset.gridCols = "2";
+                    buttons[0].textContent = "2";
+                    buttons[1].dataset.gridCols = "3";
+                    buttons[1].textContent = "3";
+                    target.style.setProperty("--product-grid-columns", "3");
+                    buttons.forEach((item) => item.classList.toggle("is-active", item.dataset.gridCols === "3"));
+                }
+            };
+
+            syncGridSwitcher();
+            mobileGridMedia.addEventListener("change", syncGridSwitcher);
+
+            const animateGridChange = (nextColumns) => {
+                const currentColumns = target.style.getPropertyValue("--product-grid-columns").trim() || "3";
+                if (currentColumns === nextColumns) {
+                    return;
+                }
+
+                const cards = [...target.querySelectorAll(".product-card")];
+                const firstRects = new Map(cards.map((card) => [card, card.getBoundingClientRect()]));
+
+                target.style.setProperty("--product-grid-columns", nextColumns);
+                buttons.forEach((item) => item.classList.toggle("is-active", item.dataset.gridCols === nextColumns));
+
+                if (shouldSkipHeavyAnimations || !cards.length) {
+                    return;
+                }
+
+                target.classList.add("is-grid-animating");
+                requestAnimationFrame(() => {
+                    const lastRects = new Map(cards.map((card) => [card, card.getBoundingClientRect()]));
+                    const animations = cards.map((card) => {
+                        const first = firstRects.get(card);
+                        const last = lastRects.get(card);
+                        const deltaX = first.left - last.left;
+                        const deltaY = first.top - last.top;
+                        const scaleX = first.width / last.width;
+                        const scaleY = first.height / last.height;
+
+                        return card.animate(
+                            [
+                                {
+                                    transform: `translate3d(${deltaX}px, ${deltaY}px, 0) scale(${scaleX}, ${scaleY})`,
+                                    transformOrigin: "top left",
+                                },
+                                {
+                                    transform: "translate3d(0, 0, 0) scale(1, 1)",
+                                    transformOrigin: "top left",
+                                },
+                            ],
+                            {
+                                duration: 460,
+                                easing: "cubic-bezier(0.22, 1, 0.36, 1)",
+                                fill: "both",
+                            }
+                        );
+                    });
+
+                    Promise.allSettled(animations.map((animation) => animation.finished)).finally(() => {
+                        animations.forEach((animation) => animation.cancel());
+                        target.classList.remove("is-grid-animating");
+                    });
+                });
+            };
+
+            buttons.forEach((button) => {
+                button.addEventListener("click", () => {
+                    animateGridChange(button.dataset.gridCols);
+                });
+            });
+        }
+
+        if (scrollTopButton) {
+            let buttonTicking = false;
+            const toggleScrollTopButton = () => {
+                buttonTicking = false;
+                const offset = window.scrollY || window.pageYOffset || document.documentElement.scrollTop || document.body.scrollTop || 0;
+                scrollTopButton.classList.toggle("is-visible", offset > 120);
+            };
+
+            const requestScrollTopToggle = () => {
+                if (buttonTicking) {
+                    return;
+                }
+                buttonTicking = true;
+                requestAnimationFrame(toggleScrollTopButton);
+            };
+
+            toggleScrollTopButton();
+            window.addEventListener("scroll", requestScrollTopToggle, { passive: true });
+            scrollTopButton.addEventListener("click", () => {
+                window.scrollTo({
+                    top: 0,
+                    behavior: prefersReducedMotion ? "auto" : "smooth",
+                });
+            });
+        }
+    })();
+</script>
+{% endblock %}

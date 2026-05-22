@@ -1,0 +1,20 @@
+{% set image_attrs = product_card_image_attrs(product) %}
+<div class="product-card-shell">
+    {% if current_user and current_user.is_admin %}
+        <a class="button button-small card-admin-link" href="{{ url_for('admin_product_edit', product_id=product.id) }}">Изменить</a>
+    {% endif %}
+    <a class="product-card card-link" href="{{ url_for('product_detail', product_id=product.id) }}">
+    <span class="card-image">
+        <img src="{{ image_attrs.src }}" srcset="{{ image_attrs.srcset }}" sizes="{{ image_attrs.sizes }}" alt="{{ product.name }}" loading="lazy" decoding="async">
+    </span>
+    <div class="card-body">
+        <p class="category-pill">{{ product.category.name }}</p>
+        <h3>{{ product.name }}</h3>
+        <p>{{ product.description[:90] }}{% if product.description|length > 90 %}...{% endif %}</p>
+        <div class="card-bottom">
+            <strong>{{ "%.0f"|format(product.price) }} {{ currency_code }}</strong>
+            <span>{% if product.in_stock %}В наличии{% else %}Нет в наличии{% endif %}</span>
+        </div>
+    </div>
+    </a>
+</div>

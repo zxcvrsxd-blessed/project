@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+
+{% block title %}Контакты - Любимый хвостик{% endblock %}
+
+{% block content %}
+<section class="page-head contact-page-head">
+    <h1>Контакты</h1>
+    <p>Напишите нам в Telegram или приходите в магазин, чтобы уточнить наличие товара, условия покупки и получить консультацию.</p>
+</section>
+
+<section class="contact-grid contact-page-grid">
+    <div class="contact-card">
+        <h2>Telegram</h2>
+        <p>Быстрая связь с владельцем магазина по товарам, наличию и заказам.</p>
+        <a class="button" href="{{ url_for('telegram_redirect') }}">Открыть Telegram</a>
+    </div>
+    <div class="contact-card">
+        <h2>Режим работы</h2>
+        <p>С 9:00 до 20:00.</p>
+        <p>Без обеда и выходных.</p>
+    </div>
+    <div class="contact-card">
+        <h2>О магазине</h2>
+        <p>ЧУП "Любимый хвостик"</p>
+        <p>УНП 491608444</p>
+        <p>Лицензия 02150/2998</p>
+    </div>
+    <div class="contact-card">
+        <h2>Адреса</h2>
+        <p>Юр. адрес: г. Калинковичи, ул. Лесная, д. 27, корп. 2, кв. 29.</p>
+        <p>Адрес магазина: г. Калинковичи, ул. Свердлова, 73а, здание напротив бассейна, остановка "Бассейн".</p>
+    </div>
+</section>
+{% endblock %}
